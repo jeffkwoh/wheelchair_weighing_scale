@@ -24,3 +24,6 @@ Components of the system:
 3. Display (undecided)
 4. LED indicators (undecided)
 
+## Features to develop
+
+Please see https://github.com/unsatisfiedpopcorn/wheelchair_weighing_scale/projects/1 for features to develop
