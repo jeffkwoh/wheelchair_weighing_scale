@@ -4,7 +4,7 @@ The NFC module used for this project is the [DFRobot NFC module for Arduino](htt
 
 ## Setup
 
-1. Download and install the files in libraries into `C:/your-path/Arduino/libraries`
+1. Download and move the files in libraries into `C:/your-path/Arduino/libraries`
 2. You should be able to run the Arduino files to read and write NFC tags
 
 ### Credits:
