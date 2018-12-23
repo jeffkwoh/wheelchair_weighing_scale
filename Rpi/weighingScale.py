@@ -8,16 +8,13 @@ try:
 	# If you do not pass any argument 'gain_channel_A' then the default value is 128
 	# If you do not pass any argument 'set_channel' then the default value is 'A'
 	# you can set a gain for channel A even though you want to currently select channel B
-	hx = HX711(dout_pin=5, pd_sck_pin=6, gain_channel_A=128, select_channel='B')
+	hx = HX711(dout_pin=5, pd_sck_pin=6, gain_channel_A=128, select_channel='A')
 	
 	result = hx.reset()		# Before we start, reset the hx711 ( not necessary)
 	if result:			# you can check if the reset was successful
 		print('Ready to use')
 	else:
 		print('not ready')
-	
-	hx.set_gain_A(gain=128)		# You can change the gain for channel A  at any time.
-	hx.select_channel(channel='A')	# Select desired channel. Either 'A' or 'B' at any time.
 	
 	# Read data several, or only one, time and return mean value
 	# it just returns exactly the number which hx711 sends
