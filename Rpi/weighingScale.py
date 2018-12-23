@@ -3,7 +3,7 @@ from hx711 import HX711  # import the class HX711
 import RPi.GPIO as GPIO  # import GPIO
 
 # Constants
-NUMBER_OF_READINGS = 10
+NUMBER_OF_READINGS = 6
 
 try:
     # Create an object hx which represents your real hx711 chip
