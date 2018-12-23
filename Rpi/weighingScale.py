@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 from hx711 import HX711  # import the class HX711
 import RPi.GPIO as GPIO  # import GPIO
-
-# Constants
-NUMBER_OF_READINGS = 6
+from config import (
+    NUMBER_OF_READINGS,
+    CLOCK_PIN, DATA_PIN,
+    CHANNEL, GAIN,
+    SCALE)
 
 try:
     # Create an object hx which represents your real hx711 chip
@@ -11,7 +13,7 @@ try:
     # If you do not pass any argument 'gain_channel_A' then the default value is 128
     # If you do not pass any argument 'set_channel' then the default value is 'A'
     # you can set a gain for channel A even though you want to currently select channel B
-    hx = HX711(dout_pin=5, pd_sck_pin=6, gain_channel_A=128, select_channel='A')
+    hx = HX711(dout_pin=DATA_PIN, pd_sck_pin=CLOCK_PIN, gain_channel_A=GAIN, select_channel=CHANNEL)
 
     result = hx.reset()  # Before we start, reset the hx711 ( not necessary)
     if result:  # you can check if the reset was successful
@@ -35,7 +37,7 @@ try:
     result = hx.zero(times=10)
 
     input('Taring done. Put weight on scale. Press ENTER to continue')
-    hx.set_scale_ratio(scale_ratio=-21.053)  # set ratio for current channel
+    hx.set_scale_ratio(scale_ratio=SCALE)  # set ratio for current channel
 
     # Read data several, or only one, time and return mean value
     # subtracted by offset and converted by scale ratio to
