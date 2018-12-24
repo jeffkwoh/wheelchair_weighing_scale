@@ -3,11 +3,44 @@ from hx711 import HX711  # import the class HX711
 import RPi.GPIO as GPIO  # import GPIO
 from config import (
     NUMBER_OF_READINGS,
-    CLOCK_PIN, DATA_PIN,
+    CLOCK_PIN, DATA_PIN, TARE_BTN_PIN,
     CHANNEL, GAIN,
     SCALE)
 
+
+# Used for debug purposes
+def test_callback(channel):
+    """
+    :type int: channel // to be supplied by callback's caller
+    :rtype: void
+    """
+    print("Callback has been called on GPIO {}".format(channel))
+
+
+def tare_callback(channel):
+    """
+    :type int: channel // to be supplied by callback's caller
+    :rtype: void
+    """
+    hx.zero()
+    print("Tared")
+
+
+def setup_Gpio():
+    """
+    :rtype: void
+    """
+    GPIO.setmode(GPIO.BCM)
+    # Falling edge triggers interrupt
+    # Sets up GPIO for taring functionality
+    GPIO.setup(TARE_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect(TARE_BTN_PIN, GPIO.FALLING, callback=tare_callback, bouncetime=300)
+
+
 try:
+    # setups GPIO for event callbacks
+    setup_Gpio()
+
     # Create an object hx which represents your real hx711 chip
     # Required input parameters are only 'dout_pin' and 'pd_sck_pin'
     # If you do not pass any argument 'gain_channel_A' then the default value is 128
