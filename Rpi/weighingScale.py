@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from hx711 import HX711  # import the class HX711
+from lib.hx711 import HX711  # import the class HX711
 import RPi.GPIO as GPIO  # import GPIO
-from arduino_nfc import SerialNfc
+from lib.arduino_nfc import SerialNfc
 from config import (
     NUMBER_OF_READINGS,
     NFC_PORT,
