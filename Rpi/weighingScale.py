@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from hx711 import HX711  # import the class HX711
 import RPi.GPIO as GPIO  # import GPIO
+from arduino_nfc import SerialNfc
 from config import (
     NUMBER_OF_READINGS,
+    NFC_PORT,
     CLOCK_PIN, DATA_PIN, TARE_BTN_PIN,
-    CHANNEL, GAIN,
-    SCALE)
+    CHANNEL, GAIN, SCALE)
 
 
 # Used for debug purposes
@@ -17,13 +18,16 @@ def test_callback(channel):
     print("Callback has been called on GPIO {}".format(channel))
 
 
-def tare_callback(channel):
+def tare_callback(scale):
     """
     :type int: channel // to be supplied by callback's caller
     :rtype: void
     """
-    hx.zero()
-    print("Tared")
+    def helper(channel):
+        scale.zero()
+        print("Tared")
+
+    return helper
 
 
 def setup_Gpio():
@@ -34,19 +38,25 @@ def setup_Gpio():
     # Falling edge triggers interrupt
     # Sets up GPIO for taring functionality
     GPIO.setup(TARE_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.add_event_detect(TARE_BTN_PIN, GPIO.FALLING, callback=tare_callback, bouncetime=300)
+    GPIO.add_event_detect(TARE_BTN_PIN, GPIO.FALLING, callback=tare_callback(hx), bouncetime=300)
+
+
+def print_serial(ser):
+    if (ser.in_waiting > 0):
+        print(ser.readline())
 
 
 try:
-    # setups GPIO for event callbacks
-    setup_Gpio()
-
     # Create an object hx which represents your real hx711 chip
     # Required input parameters are only 'dout_pin' and 'pd_sck_pin'
     # If you do not pass any argument 'gain_channel_A' then the default value is 128
     # If you do not pass any argument 'set_channel' then the default value is 'A'
     # you can set a gain for channel A even though you want to currently select channel B
     hx = HX711(dout_pin=DATA_PIN, pd_sck_pin=CLOCK_PIN, gain_channel_A=GAIN, select_channel=CHANNEL)
+
+    # setups GPIO for event callbacks
+    setup_Gpio()
+    ser_nfc = SerialNfc(NFC_PORT, baudrate=9600)
 
     result = hx.reset()  # Before we start, reset the hx711 ( not necessary)
     if result:  # you can check if the reset was successful
@@ -86,7 +96,13 @@ try:
     while True:
         # the value will vary because it is only one immediate reading.
         # the default speed for hx711 is 10 samples per second
-        print(str(hx.get_weight_mean(NUMBER_OF_READINGS)) + ' g')
+        wheelchair_weight = ser_nfc.get_weight()
+        total_weight = hx.get_weight_mean(NUMBER_OF_READINGS)
+        # TODO: This does not work as NFC reader gives weight reading slower than request for weight
+        if wheelchair_weight:
+            print('{}g'.format(total_weight - wheelchair_weight))
+        else:
+            print('{}g'.format(total_weight))
 
 except (KeyboardInterrupt, SystemExit):
     print('Bye :)')
