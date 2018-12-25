@@ -105,13 +105,13 @@ class RolliePollie:
 
                 if tag_data:  # Memoizes a new tag data if presented with one
                     self._memoized_tag_data = tag_data
-                    print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
+                    print('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
 
                 elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
-                    print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
+                    print('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
 
                 else:  # If there is no available tag data, perform as a normal weighing scale
-                    print('{}g'.format(total_weight))
+                    print('{:.1f}kg'.format(total_weight / 1000))
 
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
