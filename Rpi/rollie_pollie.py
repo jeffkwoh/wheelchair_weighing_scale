@@ -3,10 +3,11 @@ from lib.hx711 import HX711  # import the class HX711
 import RPi.GPIO as GPIO  # import GPIO
 from lib.arduino_nfc import SerialNfc
 from lib.scale_observer import ScaleObserver
+from lib.state import State
 from config import (
     NUMBER_OF_READINGS,
     NFC_PORT,
-    CLOCK_PIN, DATA_PIN, TARE_BTN_PIN,
+    CLOCK_PIN, DATA_PIN, TARE_BTN_PIN, REGISTRATION_BTN_PIN,
     CHANNEL, GAIN, SCALE)
 
 
@@ -23,6 +24,7 @@ class RolliePollie:
         self._ser_nfc = SerialNfc(NFC_PORT, baudrate=9600)
         self._observer = ScaleObserver()
         self._memoized_tag_data = None
+        self._state = State.DEFAULT
 
         # setup
         self.setup_gpio()
@@ -37,6 +39,10 @@ class RolliePollie:
     def tare_callback(self, channel):
         self._scale.zero(times=10)
         print("Tared")
+
+    def enter_registration_state_callback(self, channel):
+        self._state = State.REGISTRATION
+        print("Set to registration state")
 
     # Setups ###
     def setup_scale(self):
@@ -56,10 +62,22 @@ class RolliePollie:
         :rtype: void
         """
         GPIO.setmode(GPIO.BCM)
-        # Falling edge triggers interrupt
-        # Sets up GPIO for taring functionality
+
+        # Falling edge triggers interrupt #
+
+        # Setup for taring functionality
         GPIO.setup(TARE_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(TARE_BTN_PIN, GPIO.FALLING, callback=self.tare_callback, bouncetime=300)
+        GPIO.add_event_detect(TARE_BTN_PIN,
+                              GPIO.FALLING,
+                              callback=self.tare_callback,
+                              bouncetime=300)
+
+        # Setup for registration functionality
+        GPIO.setup(REGISTRATION_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.add_event_detect(REGISTRATION_BTN_PIN,
+                              GPIO.FALLING,
+                              callback=self.enter_registration_state_callback,
+                              bouncetime=300)
 
     def run(self):
         """
@@ -84,15 +102,18 @@ class RolliePollie:
                 total_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
                 self._observer.weight = total_weight
 
-                if tag_data:  # Memoizes a new tag data if presented with one
-                    self._memoized_tag_data = tag_data
-                    print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
+                if self._state is State.DEFAULT:
+                    if tag_data:  # Memoizes a new tag data if presented with one
+                        self._memoized_tag_data = tag_data
+                        print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
 
-                elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
-                    print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
+                    elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
+                        print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
 
-                else:  # If there is no available tag data, perform as a normal weighing scale
-                    print('{}g'.format(total_weight))
+                    else:  # If there is no available tag data, perform as a normal weighing scale
+                        print('{}g'.format(total_weight))
+                elif self._state is State.REGISTRATION:
+                    print("registration")
 
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
