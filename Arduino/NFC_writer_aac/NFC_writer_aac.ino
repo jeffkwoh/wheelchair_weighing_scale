@@ -1,7 +1,7 @@
 // Write info to NFC tag
 
-#include <PN532_HSU.h>
 #include <PN532.h>
+#include <PN532_HSU.h>
 #include <NfcAdapter.h>
 
 PN532_HSU pn532hsu(Serial1);
@@ -18,7 +18,7 @@ void loop() {
     Serial.println("\nPlace an NFC Tag that you want to Record these Messages on!"); // Command for the Serial Monitor
     if (nfc.tagPresent()) {
         NdefMessage message = NdefMessage();
-        message.addTextRecord("60.23,45.1"); // Text Message you want to Record
+        message.addTextRecord(" :60000 "); // Text Message you want to Record
         boolean success = nfc.write(message);
         if (success) {
             Serial.println("NFC tag successfully written!"); // if it works you will see this message 
