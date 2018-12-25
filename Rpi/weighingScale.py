@@ -105,7 +105,9 @@ try:
             print('{}g'.format(total_weight))
 
 except (KeyboardInterrupt, SystemExit):
-    print('Bye :)')
+    print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
 
 finally:
     GPIO.cleanup()
+    if 'ser_nfc' in globals():
+        ser_nfc.close()

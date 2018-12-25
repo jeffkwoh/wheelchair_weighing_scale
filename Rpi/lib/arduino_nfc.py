@@ -2,10 +2,14 @@
 import serial
 from .tag_data import TagData
 
+
 class SerialNfc:
 
     def __init__(self, port, baudrate=9600):
         self._ser = serial.Serial(port=port, baudrate=baudrate)
+
+    def close(self):
+        self._ser.close()
 
     def _read_raw(self):
         """
