@@ -10,6 +10,7 @@ from config import (
     CHANNEL, GAIN, SCALE)
 
 
+# RolliePollie integrates both the weighing scale and NFC reader. It acts as the controller.
 class RolliePollie:
 
     def __init__(self):
