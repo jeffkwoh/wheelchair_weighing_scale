@@ -40,9 +40,10 @@ class RolliePollie:
         self._scale.zero(times=10)
         print("Tared")
 
-    def enter_registration_state_callback(self, channel):
-        self._state = State.REGISTRATION
-        print("Set to registration state")
+    def register_callback(self, channel):
+        wheelchair_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
+        self._ser_nfc.write_weight(wheelchair_weight)
+        print("updated wheelchair weight to {}".format(wheelchair_weight))
 
     # Setups ###
     def setup_scale(self):
@@ -76,7 +77,7 @@ class RolliePollie:
         GPIO.setup(REGISTRATION_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(REGISTRATION_BTN_PIN,
                               GPIO.FALLING,
-                              callback=self.enter_registration_state_callback,
+                              callback=self.register_callback,
                               bouncetime=300)
 
     def run(self):
@@ -102,18 +103,15 @@ class RolliePollie:
                 total_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
                 self._observer.weight = total_weight
 
-                if self._state is State.DEFAULT:
-                    if tag_data:  # Memoizes a new tag data if presented with one
-                        self._memoized_tag_data = tag_data
-                        print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
+                if tag_data:  # Memoizes a new tag data if presented with one
+                    self._memoized_tag_data = tag_data
+                    print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
 
-                    elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
-                        print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
+                elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
+                    print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
 
-                    else:  # If there is no available tag data, perform as a normal weighing scale
-                        print('{}g'.format(total_weight))
-                elif self._state is State.REGISTRATION:
-                    print("registration")
+                else:  # If there is no available tag data, perform as a normal weighing scale
+                    print('{}g'.format(total_weight))
 
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
