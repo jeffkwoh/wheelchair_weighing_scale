@@ -40,6 +40,10 @@ class SerialNfc:
         return self._parse(raw)
 
     def _parse(self, byte_string):
+        """
+        :param byte_string: byte
+        :return: TagData
+        """
         # Return none if an invalid byte_string is passed
         if byte_string is None or not isinstance(byte_string, bytes):
             return None
