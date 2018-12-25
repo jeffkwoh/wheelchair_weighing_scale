@@ -96,11 +96,11 @@ try:
     while True:
         # the value will vary because it is only one immediate reading.
         # the default speed for hx711 is 10 samples per second
-        wheelchair_weight = ser_nfc.get_weight()
+        tag_data = ser_nfc.get_weight()
         total_weight = hx.get_weight_mean(NUMBER_OF_READINGS)
         # TODO: This does not work as NFC reader gives weight reading slower than request for weight
-        if wheelchair_weight:
-            print('{}g'.format(total_weight - wheelchair_weight))
+        if tag_data:
+            print('{}g'.format(total_weight - tag_data.wheelchair_weight))
         else:
             print('{}g'.format(total_weight))
 
