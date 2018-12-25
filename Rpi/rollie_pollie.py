@@ -3,10 +3,11 @@ from lib.hx711 import HX711  # import the class HX711
 import RPi.GPIO as GPIO  # import GPIO
 from lib.arduino_nfc import SerialNfc
 from lib.scale_observer import ScaleObserver
+from lib.state import State
 from config import (
     NUMBER_OF_READINGS,
     NFC_PORT,
-    CLOCK_PIN, DATA_PIN, TARE_BTN_PIN,
+    CLOCK_PIN, DATA_PIN, TARE_BTN_PIN, REGISTRATION_BTN_PIN,
     CHANNEL, GAIN, SCALE)
 
 
@@ -23,6 +24,7 @@ class RolliePollie:
         self._ser_nfc = SerialNfc(NFC_PORT, baudrate=9600)
         self._observer = ScaleObserver()
         self._memoized_tag_data = None
+        self._state = State.DEFAULT
 
         # setup
         self.setup_gpio()
@@ -37,6 +39,11 @@ class RolliePollie:
     def tare_callback(self, channel):
         self._scale.zero(times=10)
         print("Tared")
+
+    def register_callback(self, channel):
+        wheelchair_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
+        self._ser_nfc.write_weight(wheelchair_weight)
+        print("updated wheelchair weight to {}".format(wheelchair_weight))
 
     # Setups ###
     def setup_scale(self):
@@ -56,10 +63,22 @@ class RolliePollie:
         :rtype: void
         """
         GPIO.setmode(GPIO.BCM)
-        # Falling edge triggers interrupt
-        # Sets up GPIO for taring functionality
+
+        # Falling edge triggers interrupt #
+
+        # Setup for taring functionality
         GPIO.setup(TARE_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(TARE_BTN_PIN, GPIO.FALLING, callback=self.tare_callback, bouncetime=300)
+        GPIO.add_event_detect(TARE_BTN_PIN,
+                              GPIO.FALLING,
+                              callback=self.tare_callback,
+                              bouncetime=300)
+
+        # Setup for registration functionality
+        GPIO.setup(REGISTRATION_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.add_event_detect(REGISTRATION_BTN_PIN,
+                              GPIO.FALLING,
+                              callback=self.register_callback,
+                              bouncetime=300)
 
     def run(self):
         """

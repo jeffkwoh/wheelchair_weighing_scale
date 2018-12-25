@@ -43,6 +43,16 @@ class SerialNfc:
 
         return self._parse(raw)
 
+    def write_weight(self, value):
+        if not (isinstance(value, int) or isinstance(value, float)):
+            return False
+        to_write = '!' + str(value) + '!'
+        try:
+            self._ser.write(to_write.encode('utf-8'))
+            return True
+        except (SerialTimeoutException):
+            return False
+
     def _parse(self, byte_string):
         """
         :param byte_string: byte
@@ -54,6 +64,7 @@ class SerialNfc:
 
         string_arr = byte_string.decode("utf-8").split()  # May have decode errors
 
+        print(string_arr)
         # There should only be one wheelchair_weight (TODO: needs assertion)
         wheelchair_weight = ([float(w.replace(':', ''))
                               for w in string_arr
