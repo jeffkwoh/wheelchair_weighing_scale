@@ -16,6 +16,16 @@ are to be configured in config.py before use
 
 Install python 3.5 (or later) if you haven't.
 
+
+## Usage
+
+### Without NFC tags:
+Without any NFC tags, the weighing scale functions like a normal weighing scale
+
+### With NFC tags:
+When Wisca scans an NFC tag, it will read the wheelchair's weight off it and deduct the weight from the outputted value
+_untill_ the person steps off the weighing scale
+
 ## Files
 - `example.py` : example code provided by library. Does scaling of the readings to give weights **in grams**. Other functions are explained in this program as well. **Recommended to read through this before starting to code**
 

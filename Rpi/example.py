@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from hx711 import HX711		# import the class HX711
+from lib.hx711 import HX711		# import the class HX711
 import RPi.GPIO as GPIO		# import GPIO
 
 try:
