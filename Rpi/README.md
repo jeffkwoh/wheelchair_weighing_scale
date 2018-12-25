@@ -4,9 +4,17 @@ The weighing scale used is IKEA Halen scale which supports up to **150kg with 10
 
 The scale is connected to the Raspberry Pi through the HX711 load cell amplifier.
 
+## Config
+
+Configurations of:
+- serial port
+- GPIO pins
+- hx711(weighing scale) parameters
+are to be configured in config.py before use
+
 ## Setup
 
-Install python 3 if you haven't.
+Install python 3.5 (or later) if you haven't.
 
 ## Files
 - `example.py` : example code provided by library. Does scaling of the readings to give weights **in grams**. Other functions are explained in this program as well. **Recommended to read through this before starting to code**
