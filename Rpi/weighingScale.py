@@ -23,11 +23,12 @@ class RolliePollie:
         self._observer = ScaleObserver()
         self._memoized_tag_data = None
 
-        # setups GPIO for event callbacks
+        # setup
         self.setup_gpio()
         self.setup_scale()
-
         self._observer.on_scale_dismount(self.flush_tag_data_callback)
+
+    # Callbacks ###
 
     def flush_tag_data_callback(self):
         self._memoized_tag_data = None
@@ -36,6 +37,7 @@ class RolliePollie:
         self._scale.zero(times=10)
         print("Tared")
 
+    # Setups ###
     def setup_scale(self):
         # Keeps resetting until scale is ready
         while self._scale.reset() is not True:
@@ -58,12 +60,10 @@ class RolliePollie:
         GPIO.setup(TARE_BTN_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(TARE_BTN_PIN, GPIO.FALLING, callback=self.tare_callback, bouncetime=300)
 
-    def print_serial(self, ser):
-        if (ser.in_waiting > 0):
-            print(ser.readline())
-
     def run(self):
-
+        """
+        Main logic for RolliePollie weighing scale
+        """
         try:
             result = self._scale.reset()  # Before we start, reset the hx711 ( not necessary)
             if result:  # you can check if the reset was successful
@@ -82,12 +82,15 @@ class RolliePollie:
                 tag_data = self._ser_nfc.get_weight()
                 total_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
                 self._observer.weight = total_weight
-                if tag_data:
+
+                if tag_data:  # Memoizes a new tag data if presented with one
                     self._memoized_tag_data = tag_data
                     print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
-                elif self._memoized_tag_data:
+
+                elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
                     print('{}g'.format(total_weight - self._memoized_tag_data.wheelchair_weight))
-                else:
+
+                else:  # If there is no available tag data, perform as a normal weighing scale
                     print('{}g'.format(total_weight))
 
         except (KeyboardInterrupt, SystemExit):
