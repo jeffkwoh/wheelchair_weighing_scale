@@ -15,6 +15,11 @@ class ScaleObserver:
 
     @person_on_scale.setter
     def person_on_scale(self, value):
+        """
+        On setting the value of the person_on_scale attribute, if a dismount is detected, callbacks will be called.
+        :param value: boolean
+        :return: void
+        """
         # if person has dismounted
         if value is False and self._person_on_scale is True:
             self._exec_scale_dismount_callbacks()
@@ -27,6 +32,11 @@ class ScaleObserver:
 
     @weight.setter
     def weight(self, value):
+        """
+        Every time a weight is updated, it will check to determine if a person is one scale
+        :param value: float
+        :return: void
+        """
 
         def threshold_change(other_state):
             state, tolerance_value = self._threshold_state
@@ -48,6 +58,11 @@ class ScaleObserver:
         self._weight = value
 
     def on_scale_dismount(self, callback):
+        """
+        Binds callbacks the dismounting event
+        :param callback: lambda: void
+        :return: void
+        """
         self._scale_dismount_callbacks.add(callback)
 
     def _exec_scale_dismount_callbacks(self):
