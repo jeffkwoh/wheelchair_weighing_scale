@@ -1,13 +1,37 @@
+from collections import deque
+
+
 # ScaleObserver is used to monitor changes in the weighing scale used, and trigger callbacks that are bound to it
 class ScaleObserver:
 
-    def __init__(self, threshold_weight=2000, tolerance=3):
+    def __init__(self, threshold_weight=1000, tolerance=3, history_size=5, stability_deviation=100):
+
+        # person_on_scale, scale_dismount
         self._person_on_scale = False
         self._tolerance = tolerance
         self._threshold_weight = threshold_weight
         self._threshold_state = (0, tolerance)
-        self.weight = -1
         self._scale_dismount_callbacks = set()
+
+        # is_stable
+        self._stability_deviation = stability_deviation
+        self._history_size = history_size
+        self._is_stable = False
+        self._weight_history = deque()
+        self._successful_weighing_callbacks = {}
+
+        self.weight = -1
+
+    @property
+    def is_stable(self):
+        return self._is_stable
+
+    @is_stable.setter
+    def is_stable(self, value):
+
+        # A person on the scale has successfully taken his weight
+        if self.person_on_scale and value is True:
+            self._exec_successful_weighing_callbacks()
 
     @property
     def person_on_scale(self):
@@ -49,11 +73,36 @@ class ScaleObserver:
 
             return tolerance_value <= 0
 
+        def add_to_history(weight):
+            def check_if_stable(history):
+                from functools import reduce
+                if history is None or len(history) is 0:
+                    return False
+                mean = reduce(lambda x, y: x + y, history, 0) / len(history)
+                return len([w for w in history if abs(w - mean) > self._tolerance]) == 0
+
+            self._weight_history.append(weight)
+
+            if len(self._weight_history) < self._history_size:
+                return False  # not enough readings in history
+
+            while len(self._weight_history) > self._history_size:
+                self._weight_history.popleft()
+
+            return check_if_stable(self._weight_history)
+
+        # Checks to see if a person is on the scale
         if value > self._threshold_weight:
             if threshold_change(0):
                 self.person_on_scale = True
         elif threshold_change(1):
             self.person_on_scale = False
+
+        # Checks to see if weight readings are stable
+        if add_to_history(value):
+            self.is_stable = True
+        else:
+            self.is_stable = False
 
         self._weight = value
 
@@ -65,6 +114,30 @@ class ScaleObserver:
         """
         self._scale_dismount_callbacks.add(callback)
 
+    def on_successful_weighing(self, callback, lifetime=-1):
+        """
+        Binds callbacks the successful weighing event.
+        Lifetime determines the maximum number of times the callback would be triggered by the event.
+        Lifetime of -1 means the callback would always be triggered.
+        :param callback: lambda: void
+        :param lifetime: int
+        :return: void
+        """
+        if callback not in self._successful_weighing_callbacks:
+            self._successful_weighing_callbacks[callback] = lifetime
+        else:
+            print("callback is already bound")
+
     def _exec_scale_dismount_callbacks(self):
         for callback in self._scale_dismount_callbacks:
             callback()
+
+    def _exec_successful_weighing_callbacks(self):
+        for callback, lifetime in self._successful_weighing_callbacks.copy().items():
+            if lifetime is -1:
+                callback()
+            elif lifetime > 0:
+                self._successful_weighing_callbacks[callback] -= 1
+                callback()
+            else:  # lazy deletion, callbacks with lifetime of zero are expired
+                del self._successful_weighing_callbacks[callback]

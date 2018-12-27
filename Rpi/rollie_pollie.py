@@ -30,8 +30,11 @@ class RolliePollie:
         self.setup_gpio()
         self.setup_scale()
         self._observer.on_scale_dismount(self.flush_tag_data_callback)
+        self._observer.on_successful_weighing(self.test_callback)
 
     # Callbacks ###
+    def test_callback(self):
+        print("Tested")
 
     def flush_tag_data_callback(self):
         self._memoized_tag_data = None
@@ -48,12 +51,12 @@ class RolliePollie:
     # Setups ###
     def setup_scale(self):
         # Keeps resetting until scale is ready
-        while self._scale.reset() is not True:
+        while not self._scale.reset():
             print("resetting")
             pass
         # measure tare and save the value as offset for current channel and gain selected.
         # keeps looping until properly zeroed
-        while self._scale.zero(times=10) is not True:
+        while not self._scale.zero(times=10):
             print("zeroing")
             pass
         self._scale.set_scale_ratio(scale_ratio=SCALE)  # set ratio for current channel
