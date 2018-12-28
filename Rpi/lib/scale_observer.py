@@ -13,6 +13,9 @@ class ScaleObserver:
         self._threshold_state = (0, tolerance)
         self._scale_dismount_callbacks = {}
 
+        # scale_mount
+        self._scale_mount_callbacks = {}
+
         # is_stable
         self._stability_deviation = stability_deviation
         self._history_size = history_size
@@ -47,6 +50,10 @@ class ScaleObserver:
         # if person has dismounted
         if value is False and self._person_on_scale is True:
             self._exec_on_scale_dismount_callbacks()
+
+        # if person has mounted
+        if value is True and self._person_on_scale is False:
+            self._exec_on_scale_mount_callbacks()
 
         self._person_on_scale = value
 
@@ -106,6 +113,17 @@ class ScaleObserver:
 
         self._weight = value
 
+    def on_scale_mount(self, callback, lifetime=-1):
+        """
+        Binds callbacks the dismounting event
+        Lifetime determines the maximum number of times the callback would be triggered by the event.
+        Lifetime of -1 means the callback would always be triggered.
+        :param callback: lambda: void
+        :param lifetime: int
+        :return: void
+        """
+        self._bind_to_trigger(callback, self._scale_mount_callbacks, lifetime)
+
     def on_scale_dismount(self, callback, lifetime=-1):
         """
         Binds callbacks the dismounting event
@@ -151,3 +169,13 @@ class ScaleObserver:
                 callback()
             else:  # lazy deletion, callbacks with lifetime of zero are expired
                 del self._scale_dismount_callbacks[callback]
+
+    def _exec_on_scale_mount_callbacks(self):
+        for callback, lifetime in self._scale_mount_callbacks.copy().items():
+            if lifetime is -1:
+                callback()
+            elif lifetime > 0:
+                self._scale_mount_callbacks[callback] -= 1
+                callback()
+            else:  # lazy deletion, callbacks with lifetime of zero are expired
+                del self._scale_mount_callbacks[callback]
