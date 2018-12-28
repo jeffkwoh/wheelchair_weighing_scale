@@ -62,7 +62,8 @@ class SerialNfc:
         if byte_string is None or not isinstance(byte_string, bytes):
             return None
 
-        string_arr = byte_string.decode("utf-8").split()  # May have decode errors
+        # \x02, start of line control character is replaced
+        string_arr = byte_string.decode("utf-8").replace("\x02", "").split()  # May have decode errors
 
         print(string_arr)
         # There should only be one wheelchair_weight (TODO: needs assertion)

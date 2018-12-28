@@ -11,7 +11,7 @@ class ScaleObserver:
         self._tolerance = tolerance
         self._threshold_weight = threshold_weight
         self._threshold_state = (0, tolerance)
-        self._scale_dismount_callbacks = set()
+        self._scale_dismount_callbacks = {}
 
         # is_stable
         self._stability_deviation = stability_deviation
@@ -31,7 +31,7 @@ class ScaleObserver:
 
         # A person on the scale has successfully taken his weight
         if self.person_on_scale and value is True:
-            self._exec_successful_weighing_callbacks()
+            self._exec_callbacks(self._successful_weighing_callbacks)
 
     @property
     def person_on_scale(self):
@@ -46,7 +46,7 @@ class ScaleObserver:
         """
         # if person has dismounted
         if value is False and self._person_on_scale is True:
-            self._exec_scale_dismount_callbacks()
+            self._exec_callbacks(self._scale_dismount_callbacks)
 
         self._person_on_scale = value
 
@@ -106,13 +106,16 @@ class ScaleObserver:
 
         self._weight = value
 
-    def on_scale_dismount(self, callback):
+    def on_scale_dismount(self, callback, lifetime=-1):
         """
         Binds callbacks the dismounting event
+        Lifetime determines the maximum number of times the callback would be triggered by the event.
+        Lifetime of -1 means the callback would always be triggered.
         :param callback: lambda: void
+        :param lifetime: int
         :return: void
         """
-        self._scale_dismount_callbacks.add(callback)
+        self._bind_to_trigger(callback, self._scale_dismount_callbacks, lifetime)
 
     def on_successful_weighing(self, callback, lifetime=-1):
         """
@@ -123,21 +126,20 @@ class ScaleObserver:
         :param lifetime: int
         :return: void
         """
-        if callback not in self._successful_weighing_callbacks:
-            self._successful_weighing_callbacks[callback] = lifetime
+        self._bind_to_trigger(callback, self._successful_weighing_callbacks, lifetime)
+
+    def _bind_to_trigger(self, callback, callbacks_dict, lifetime):
+        if callback not in callbacks_dict:
+            callbacks_dict[callback] = lifetime
         else:
             print("callback is already bound")
 
-    def _exec_scale_dismount_callbacks(self):
-        for callback in self._scale_dismount_callbacks:
-            callback()
-
-    def _exec_successful_weighing_callbacks(self):
-        for callback, lifetime in self._successful_weighing_callbacks.copy().items():
+    def _exec_callbacks(self, callbacks):
+        for callback, lifetime in callbacks.copy().items():
             if lifetime is -1:
                 callback()
             elif lifetime > 0:
-                self._successful_weighing_callbacks[callback] -= 1
+                callbacks[callback] -= 1
                 callback()
             else:  # lazy deletion, callbacks with lifetime of zero are expired
-                del self._successful_weighing_callbacks[callback]
+                del callbacks[callback]
