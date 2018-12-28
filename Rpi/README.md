@@ -14,8 +14,8 @@ are to be configured in config.py before use
 
 ## Setup
 
-Install python 3.5 (or later) if you haven't.
-
+1. Install python 3.5 (or later) if you haven't.
+2. Install Adafruit's Char_LCD python library using `sudo pip3 install adafruit-charlcd`.
 
 ## Usage
 
