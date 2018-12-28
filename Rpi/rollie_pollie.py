@@ -33,7 +33,8 @@ class RolliePollie:
         self.setup_gpio()
         self.setup_scale()
         self._observer.on_scale_dismount(self.flush_tag_data_callback)
-        self._observer.on_successful_weighing(self.test_callback)
+        self._observer.on_scale_dismount(self.write_patient_weight_callback_clearer)
+        self._observer.on_scale_mount(self.write_patient_weight_callback_adder)
 
         # instantiate lcd and specify pins
         # GPIO.setup(11, GPIO.OUT)
@@ -45,6 +46,25 @@ class RolliePollie:
     def test_callback(self, weight):
         print("Tested")
 
+    def write_patient_weight_callback_clearer(self):
+        '''
+        TODO: On succssful weighing AND RFID is present, at the moment this does not check
+        for RFID before writing to it
+        '''
+        self._observer.on_successful_weighing(self.write_patient_weight_callback, lifetime=0)
+
+    def write_patient_weight_callback_adder(self):
+        '''
+        TODO: On succssful weighing AND RFID is present, at the moment this does not check
+        for RFID before writing to it
+        '''
+        self._observer.on_successful_weighing(self.write_patient_weight_callback, lifetime=1)
+
+    def write_patient_weight_callback(self, weight):
+        rounded_weight = round(weight)
+        self._ser_nfc.update_patient_weight(rounded_weight)
+        print("Attempt to write {} to tag".format(rounded_weight))
+
     def flush_tag_data_callback(self):
         self._memoized_tag_data = None
 
@@ -54,7 +74,7 @@ class RolliePollie:
 
     def register_callback(self, channel):
         wheelchair_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
-        self._ser_nfc.write_weight(wheelchair_weight)
+        self._ser_nfc.write_wheelchair_weight(wheelchair_weight)
         print("updated wheelchair weight to {}".format(wheelchair_weight))
 
     # Setups ###

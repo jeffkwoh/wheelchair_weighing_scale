@@ -4,6 +4,7 @@ from .tag_data import TagData
 
 
 class SerialNfc:
+    UPDATE_PATIENT_WEIGHT_DELIMITER = '@'
 
     def __init__(self, port, baudrate=9600):
         self._ser = serial.Serial(port=port, baudrate=baudrate)
@@ -43,7 +44,19 @@ class SerialNfc:
 
         return self._parse(raw)
 
-    def write_weight(self, value):
+    def update_patient_weight(self, value):
+        if not (isinstance(value, int) or isinstance(value, float)):
+            return False
+        to_write = SerialNfc.UPDATE_PATIENT_WEIGHT_DELIMITER + str(value) \
+                   + SerialNfc.UPDATE_PATIENT_WEIGHT_DELIMITER
+
+        try:
+            self._ser.write(to_write.encode('utf-8'))
+            return True
+        except (SerialTimeoutException):
+            return False
+
+    def write_wheelchair_weight(self, value):
         if not (isinstance(value, int) or isinstance(value, float)):
             return False
         to_write = '!' + str(value) + '!'
@@ -62,8 +75,12 @@ class SerialNfc:
         if byte_string is None or not isinstance(byte_string, bytes):
             return None
 
-        # \x02, start of line control character is replaced
-        string_arr = byte_string.decode("utf-8").replace("\x02", "").split()  # May have decode errors
+        try:
+            # \x02, start of line control character is replaced
+            string_arr = byte_string.decode("utf-8").replace("\x02", "").split()  # May have decode errors
+        except UnicodeDecodeError:
+            print("Unicode Decode Error")
+            return None
 
         print(string_arr)
         # There should only be one wheelchair_weight (TODO: needs assertion)
