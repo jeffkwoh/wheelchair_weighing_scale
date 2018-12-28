@@ -10,7 +10,7 @@ from config import (
     NUMBER_OF_READINGS,
     NFC_PORT,
     CLOCK_PIN, DATA_PIN, TARE_BTN_PIN, REGISTRATION_BTN_PIN,
-    CHANNEL, GAIN, SCALE)
+    CHANNEL, GAIN, SCALE, RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
 
 
 # RolliePollie integrates both the weighing scale and NFC reader. It acts as the controller.
