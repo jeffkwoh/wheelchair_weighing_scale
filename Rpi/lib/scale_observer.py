@@ -129,10 +129,7 @@ class ScaleObserver:
         self._bind_to_trigger(callback, self._successful_weighing_callbacks, lifetime)
 
     def _bind_to_trigger(self, callback, callbacks_dict, lifetime):
-        if callback not in callbacks_dict:
-            callbacks_dict[callback] = lifetime
-        else:
-            print("callback is already bound")
+        callbacks_dict[callback] = lifetime # OVERWRITES previous callback if any
 
     def _exec_successful_weighing_callbacks(self):
         callbacks = self._successful_weighing_callbacks
