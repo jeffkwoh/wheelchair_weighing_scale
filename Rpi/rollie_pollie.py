@@ -41,7 +41,7 @@ class RolliePollie:
 
     def tare_callback(self, channel):
         self._scale.zero(times=10)
-        print("Tared via trigger on channel {}".format(channel))
+        print("Tared")
 
     def register_callback(self, channel):
         wheelchair_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
@@ -65,7 +65,6 @@ class RolliePollie:
         """
         :rtype: void
         """
-        GPIO.cleanup()
         GPIO.setmode(GPIO.BCM)
 
         # Falling edge triggers interrupt #
