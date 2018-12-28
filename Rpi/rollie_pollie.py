@@ -37,8 +37,8 @@ class RolliePollie:
 
         # instantiate lcd and specify pins
         # GPIO.setup(11, GPIO.OUT)
-        self.lcd = Adafruit_CharLCD(rs=19, en=13,
-                               d4=11, d5=9, d6=10, d7=22,
+        self.lcd = Adafruit_CharLCD(rs=RS_PIN, en=EN_PIN,
+                               d4=D4_PIN, d5=D5_PIN, d6=D6_PIN, d7=D7_PIN,
                                cols=16, lines=2)
         self.lcd.clear()
     # Callbacks ###
