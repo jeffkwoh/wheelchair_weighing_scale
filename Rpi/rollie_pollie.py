@@ -4,17 +4,20 @@ import RPi.GPIO as GPIO  # import GPIO
 from lib.arduino_nfc import SerialNfc
 from lib.scale_observer import ScaleObserver
 from lib.state import State
+from time import sleep
+from Adafruit_CharLCD import Adafruit_CharLCD
 from config import (
-    NUMBER_OF_READINGS,
+    NUMBER_OF_READINGS, CHANNEL, GAIN, SCALE,
     NFC_PORT,
     CLOCK_PIN, DATA_PIN, TARE_BTN_PIN, REGISTRATION_BTN_PIN,
-    CHANNEL, GAIN, SCALE)
+    RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
 
 
 # RolliePollie integrates both the weighing scale and NFC reader. It acts as the controller.
 class RolliePollie:
 
     def __init__(self):
+
         # Create an object hx which represents your real hx711 chip
         # Required input parameters are only 'dout_pin' and 'pd_sck_pin'
         # If you do not pass any argument 'gain_channel_A' then the default value is 128
@@ -32,8 +35,14 @@ class RolliePollie:
         self._observer.on_scale_dismount(self.flush_tag_data_callback)
         self._observer.on_successful_weighing(self.test_callback)
 
+        # instantiate lcd and specify pins
+        # GPIO.setup(11, GPIO.OUT)
+        self.lcd = Adafruit_CharLCD(rs=RS_PIN, en=EN_PIN,
+                               d4=D4_PIN, d5=D5_PIN, d6=D6_PIN, d7=D7_PIN,
+                               cols=16, lines=2)
+        self.lcd.clear()
     # Callbacks ###
-    def test_callback(self):
+    def test_callback(self, weight):
         print("Tested")
 
     def flush_tag_data_callback(self):
@@ -108,14 +117,17 @@ class RolliePollie:
 
                 if tag_data:  # Memoizes a new tag data if presented with one
                     self._memoized_tag_data = tag_data
-                    print('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
+                    weight = '{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000)
 
                 elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
-                    print('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
+                    weight = '{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000)
 
                 else:  # If there is no available tag data, perform as a normal weighing scale
-                    print('{:.1f}kg'.format(total_weight / 1000))
-
+                    weight = '{:.1f}kg'.format(total_weight / 1000)
+                
+                self.lcd.clear()
+                self.lcd.message(weight)
+                print(weight)
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
 
