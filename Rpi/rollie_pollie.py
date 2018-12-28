@@ -7,10 +7,10 @@ from lib.state import State
 from time import sleep
 from Adafruit_CharLCD import Adafruit_CharLCD
 from config import (
-    NUMBER_OF_READINGS,
+    NUMBER_OF_READINGS, CHANNEL, GAIN, SCALE,
     NFC_PORT,
     CLOCK_PIN, DATA_PIN, TARE_BTN_PIN, REGISTRATION_BTN_PIN,
-    CHANNEL, GAIN, SCALE, RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
+    RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
 
 
 # RolliePollie integrates both the weighing scale and NFC reader. It acts as the controller.
