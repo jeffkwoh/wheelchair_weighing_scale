@@ -4,12 +4,17 @@ import RPi.GPIO as GPIO  # import GPIO
 from lib.arduino_nfc import SerialNfc
 from lib.scale_observer import ScaleObserver
 from lib.state import State
+from time import sleep
+from Adafruit_CharLCD import Adafruit_CharLCD
 from config import (
     NUMBER_OF_READINGS,
     NFC_PORT,
     CLOCK_PIN, DATA_PIN, TARE_BTN_PIN, REGISTRATION_BTN_PIN,
     CHANNEL, GAIN, SCALE)
-
+# instantiate lcd and specify pins
+lcd = Adafruit_CharLCD(rs=19, en=13,
+                       d4=11, d5=9, d6=10, d7=22,
+                       cols=16, lines=2)
 
 # RolliePollie integrates both the weighing scale and NFC reader. It acts as the controller.
 class RolliePollie:
@@ -31,6 +36,7 @@ class RolliePollie:
         self.setup_scale()
         self._observer.on_scale_dismount(self.flush_tag_data_callback)
         self._observer.on_successful_weighing(self.test_callback)
+        lcd.clear()
 
     # Callbacks ###
     def test_callback(self):
@@ -109,13 +115,13 @@ class RolliePollie:
 
                 if tag_data:  # Memoizes a new tag data if presented with one
                     self._memoized_tag_data = tag_data
-                    print('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
+                    lcd.message('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
 
                 elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
-                    print('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
+                    lcd.message('{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000))
 
                 else:  # If there is no available tag data, perform as a normal weighing scale
-                    print('{:.1f}kg'.format(total_weight / 1000))
+                    lcd.message('{:.1f}kg'.format(total_weight / 1000))
 
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
