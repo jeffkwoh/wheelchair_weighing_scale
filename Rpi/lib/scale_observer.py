@@ -4,7 +4,7 @@ from collections import deque
 # ScaleObserver is used to monitor changes in the weighing scale used, and trigger callbacks that are bound to it
 class ScaleObserver:
 
-    def __init__(self, threshold_weight=1000, tolerance=3, history_size=5, stability_deviation=100):
+    def __init__(self, threshold_weight=1000, tolerance=3, history_size=5, stability_deviation=500):
 
         # person_on_scale, scale_dismount
         self._person_on_scale = False
@@ -31,7 +31,7 @@ class ScaleObserver:
 
         # A person on the scale has successfully taken his weight
         if self.person_on_scale and value is True:
-            self._exec_callbacks(self._successful_weighing_callbacks)
+            self._exec_successful_weighing_callbacks()
 
     @property
     def person_on_scale(self):
@@ -46,7 +46,7 @@ class ScaleObserver:
         """
         # if person has dismounted
         if value is False and self._person_on_scale is True:
-            self._exec_callbacks(self._scale_dismount_callbacks)
+            self._exec_on_scale_dismount_callbacks()
 
         self._person_on_scale = value
 
@@ -134,12 +134,23 @@ class ScaleObserver:
         else:
             print("callback is already bound")
 
-    def _exec_callbacks(self, callbacks):
+    def _exec_successful_weighing_callbacks(self):
+        callbacks = self._successful_weighing_callbacks
         for callback, lifetime in callbacks.copy().items():
+            if lifetime is -1:
+                callback(self.weight)
+            elif lifetime > 0:
+                callbacks[callback] -= 1
+                callback(self.weight)
+            else:  # lazy deletion, callbacks with lifetime of zero are expired
+                del callbacks[callback]
+
+    def _exec_on_scale_dismount_callbacks(self):
+        for callback, lifetime in self._scale_dismount_callbacks.copy().items():
             if lifetime is -1:
                 callback()
             elif lifetime > 0:
-                callbacks[callback] -= 1
+                self._scale_dismount_callbacks[callback] -= 1
                 callback()
             else:  # lazy deletion, callbacks with lifetime of zero are expired
-                del callbacks[callback]
+                del self._scale_dismount_callbacks[callback]
