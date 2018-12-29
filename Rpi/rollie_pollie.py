@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO  # import GPIO
 from lib.arduino_nfc import SerialNfc
 from lib.scale_observer import ScaleObserver
 from lib.state import State
+from lib.tag_data import TagData
 from config import (
     NUMBER_OF_READINGS,
     NFC_PORT,
@@ -13,6 +14,7 @@ from config import (
 
 # RolliePollie integrates both the weighing scale and NFC reader. It acts as the controller.
 class RolliePollie:
+    EMPTY_TAG = TagData(0, [])
 
     def __init__(self):
         # Create an object hx which represents your real hx711 chip
@@ -51,13 +53,13 @@ class RolliePollie:
         '''
         self._observer.on_successful_weighing(self.write_patient_weight_callback, lifetime=1)
 
-    def write_patient_weight_callback(self, weight):
-        rounded_weight = round(weight)
-        self._ser_nfc.update_patient_weight(rounded_weight)
-        print("Attempt to write {} to tag".format(rounded_weight))
+    def write_patient_weight_callback(self, total_weight, wheelchair_weight):
+        patient_weight = round(total_weight - wheelchair_weight)
+        self._ser_nfc.update_patient_weight_with_date(patient_weight)
+        print("Attempt to write {} to tag".format(patient_weight))
 
     def flush_tag_data_callback(self):
-        self._memoized_tag_data = None
+        self._memoized_tag_data = RolliePollie.EMPTY_TAG
 
     def tare_callback(self, channel):
         self._scale.zero(times=10)
@@ -103,6 +105,11 @@ class RolliePollie:
                               callback=self.register_callback,
                               bouncetime=300)
 
+    def _update_observer(self, total_weight, tag_data, nfc_present):
+        self._observer.total_weight = total_weight
+        self._observer.tag_data = tag_data
+        self._observer.nfc_present = nfc_present
+
     def run(self):
         """
         Main logic for RolliePollie weighing scale
@@ -123,8 +130,8 @@ class RolliePollie:
                 # the value will vary because it is only one immediate reading.
                 # the default speed for hx711 is 10 samples per second
                 tag_data = self._ser_nfc.get_weight()
+                is_nfc_present = not(tag_data is None)
                 total_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
-                self._observer.weight = total_weight
 
                 if tag_data:  # Memoizes a new tag data if presented with one
                     self._memoized_tag_data = tag_data
@@ -135,6 +142,8 @@ class RolliePollie:
 
                 else:  # If there is no available tag data, perform as a normal weighing scale
                     print('{:.1f}kg'.format(total_weight / 1000))
+
+                self._update_observer(total_weight, self._memoized_tag_data, is_nfc_present)
 
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
