@@ -62,6 +62,7 @@ void loop(void) {
       String toPrint;
       extractMessage(message, toPrint);
       Serial.println(toPrint);
+      Serial.println(message.getRecordCount());
     }
   }
   delay(1000); // Variable delay to tweak and find the Magic Number
