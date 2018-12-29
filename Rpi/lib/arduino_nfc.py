@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import serial
 from .tag_data import TagData
+from datetime import date, datetime
 
 
 class SerialNfc:
     UPDATE_PATIENT_WEIGHT_DELIMITER = '@'
+    DATE_FORMAT = "%d-%m-%Y"
 
     def __init__(self, port, baudrate=9600):
         self._ser = serial.Serial(port=port, baudrate=baudrate)
@@ -44,12 +46,13 @@ class SerialNfc:
 
         return self._parse(raw)
 
-    def update_patient_weight(self, value):
-        if not (isinstance(value, int) or isinstance(value, float)):
+    def update_patient_weight_with_date(self, weight):
+        if not (isinstance(weight, int) or isinstance(weight, float)):
             return False
-        to_write = SerialNfc.UPDATE_PATIENT_WEIGHT_DELIMITER + str(value) \
-                   + SerialNfc.UPDATE_PATIENT_WEIGHT_DELIMITER
-
+        todays_date_str = date.today().strftime(SerialNfc.DATE_FORMAT)
+        to_write = SerialNfc.UPDATE_PATIENT_WEIGHT_DELIMITER + str(round(weight)) \
+                   + "," + todays_date_str + SerialNfc.UPDATE_PATIENT_WEIGHT_DELIMITER
+        print(to_write)
         try:
             self._ser.write(to_write.encode('utf-8'))
             return True
@@ -59,7 +62,7 @@ class SerialNfc:
     def write_wheelchair_weight(self, value):
         if not (isinstance(value, int) or isinstance(value, float)):
             return False
-        to_write = '!' + str(value) + '!'
+        to_write = '!' + str(round(value)) + '!'
         try:
             self._ser.write(to_write.encode('utf-8'))
             return True
@@ -71,6 +74,17 @@ class SerialNfc:
         :param byte_string: byte
         :return: TagData
         """
+
+        def parse_weight_history(raw):
+            """
+            :param raw: String
+            :return: (float, datetime.date)
+            """
+            weight_history_pair = raw.replace('^', '').split(',')
+            weight = float(weight_history_pair[0])
+            history = datetime.strptime(SerialNfc.DATE_FORMAT, weight_history_pair[1]).date()
+            return weight, history
+
         # Return none if an invalid byte_string is passed
         if byte_string is None or not isinstance(byte_string, bytes):
             return None
@@ -89,7 +103,7 @@ class SerialNfc:
                               if self._is_wheelchair_weight(w)]
                              + [None])[0]
         # order is preserved
-        weight_history = [float(w.replace('^', ''))
+        weight_history = [parse_weight_history(w)
                           for w in string_arr
                           if self._is_prefixed_by(w, '^')]
 

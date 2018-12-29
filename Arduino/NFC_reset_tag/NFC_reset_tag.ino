@@ -10,7 +10,7 @@ NfcAdapter nfc = NfcAdapter(pn532hsu);  // Indicates the Shield you are using
 
 void setup(void) {
   Serial.begin(9600);
-  Serial.print("RESET TAG");
+  Serial.println("RESET TAG");
   nfc.begin();
 }
 
@@ -62,6 +62,7 @@ void loop(void) {
       String toPrint;
       extractMessage(message, toPrint);
       Serial.println(toPrint);
+      Serial.println(message.getRecordCount());
     }
   }
   delay(1000); // Variable delay to tweak and find the Magic Number

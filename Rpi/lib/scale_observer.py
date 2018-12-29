@@ -23,7 +23,9 @@ class ScaleObserver:
         self._weight_history = deque()
         self._successful_weighing_callbacks = {}
 
-        self.weight = -1
+        self.total_weight = -1
+        self.tag_data = None
+        self.nfc_present = False
 
     @property
     def is_stable(self):
@@ -33,8 +35,10 @@ class ScaleObserver:
     def is_stable(self, value):
 
         # A person on the scale has successfully taken his weight
-        if self.person_on_scale and value is True:
+        if self.person_on_scale and (self.nfc_present is True) and (value is True):
             self._exec_successful_weighing_callbacks()
+
+        self._is_stable = value
 
     @property
     def person_on_scale(self):
@@ -58,11 +62,11 @@ class ScaleObserver:
         self._person_on_scale = value
 
     @property
-    def weight(self):
+    def total_weight(self):
         return self._weight
 
-    @weight.setter
-    def weight(self, value):
+    @total_weight.setter
+    def total_weight(self, value):
         """
         Every time a weight is updated, it will check to determine if a person is one scale
         :param value: float
@@ -147,16 +151,17 @@ class ScaleObserver:
         self._bind_to_trigger(callback, self._successful_weighing_callbacks, lifetime)
 
     def _bind_to_trigger(self, callback, callbacks_dict, lifetime):
-        callbacks_dict[callback] = lifetime # OVERWRITES previous callback if any
+        callbacks_dict[callback] = lifetime  # OVERWRITES previous callback if any
 
     def _exec_successful_weighing_callbacks(self):
         callbacks = self._successful_weighing_callbacks
+        wheelchair_weight = 0 if self.tag_data is None else self.tag_data.wheelchair_weight
         for callback, lifetime in callbacks.copy().items():
             if lifetime is -1:
-                callback(self.weight)
+                callback(self.total_weight)
             elif lifetime > 0:
                 callbacks[callback] -= 1
-                callback(self.weight)
+                callback(self.total_weight, wheelchair_weight)
             else:  # lazy deletion, callbacks with lifetime of zero are expired
                 del callbacks[callback]
 

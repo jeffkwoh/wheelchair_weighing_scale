@@ -103,9 +103,9 @@ void serialEvent() {
 
       message.addTextRecord(PATIENT_WEIGHT_PREFIX + receivedStr);
       
-      // Only attempts to write if NFC tag has less than 3 records
-      // Currently experiencing a problem when the 4th block is written into
-      boolean success = message.getRecordCount() > 3 ? false : nfc.write(message);
+      // Only attempts to write if NFC tag has less than 2 records
+      // Currently experiencing a problem when the 3rd block is written into
+      boolean success = message.getRecordCount() > 2 ? false : nfc.write(message);
       if (success) {
         Serial.println("NFC tag successfully written!"); // if it works you will see this message 
       } else {
@@ -163,5 +163,5 @@ void loop(void) {
       Serial.println(toPrint);
     }
   }
-  delay(2000); // Variable delay to tweak and find the Magic Number
+  delay(1000); // Variable delay to tweak and find the Magic Number
 }
