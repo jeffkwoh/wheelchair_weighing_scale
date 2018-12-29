@@ -145,25 +145,34 @@ class RolliePollie:
 
                 if tag_data:  # Memoizes a new tag data if presented with one
                     self._memoized_tag_data = tag_data
-                    weight = '{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000)
+                    weight_in_grams = total_weight - self._memoized_tag_data.wheelchair_weight
 
                 elif self._memoized_tag_data:  # In the absence of tag data, use last memoized tag data
-                    weight = '{:.1f}kg'.format((total_weight - self._memoized_tag_data.wheelchair_weight) / 1000)
+                    weight_in_grams = total_weight - self._memoized_tag_data.wheelchair_weight
 
                 else:  # If there is no available tag data, perform as a normal weighing scale
-                    weight = '{:.1f}kg'.format(total_weight / 1000)
+                    weight_in_grams = total_weight
 
                 self._update_observer(total_weight, self._memoized_tag_data, is_nfc_present)
-                self.lcd.clear()
-                self.lcd.message(weight)
-                print(weight)
+                self.output_weight_g_to_kg(weight_in_grams)
+                print("{:.1f}kg".format(weight_in_grams / 1000)) # for debugging
 
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
 
         finally:
-            GPIO.cleanup()
             self._ser_nfc.close()
+            self.lcd.enable_display(False)
+            GPIO.cleanup()
+
+    def output_weight_g_to_kg(self, weight, decimal_points = 1):
+        self.lcd.clear()
+
+        weight_in_kg = round(weight / 1000, decimal_points)
+        # Ensures that zeroes are positive
+        formatted_output = "{:.1f}kg".format(weight_in_kg if weight_in_kg != 0 else abs(weight_in_kg))
+
+        self.lcd.message(formatted_output)
 
 
 if __name__ == '__main__':
