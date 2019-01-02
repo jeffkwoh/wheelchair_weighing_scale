@@ -18,11 +18,13 @@ As such we aim to **create a weighing scale which gives a more positive experien
 
 ## Components
 
-Components of the system:
-1. NFC Tag
-2. Weighing scale
-3. Display (undecided)
-4. LED indicators (undecided)
+The system comprises of a Raspberry Pi, which acts as a central processor. It is connected to the following:
+
+1. HX711 (provides weight readings via GPIO)
+  - Load cells
+2. Arduino (provides NFC readings via USB serial)
+  - NFC Tag Reader
+3. LCD (output via GPIO)
 
 ## Features to develop
 
