@@ -21,9 +21,9 @@ As such we aim to **create a weighing scale which gives a more positive experien
 The system comprises of a Raspberry Pi, which acts as a central processor. It is connected to the following:
 
 1. HX711 (provides weight readings via GPIO)
-  - Load cells
+    - Load cells
 2. Arduino (provides NFC readings via USB serial)
-  - NFC Tag Reader
+    - NFC Tag Reader
 3. LCD (output via GPIO)
 
 ## Features to develop
