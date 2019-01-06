@@ -5,7 +5,8 @@ from lib.arduino_nfc import SerialNfc
 from lib.scale_observer import ScaleObserver
 from lib.state import State
 from time import sleep
-from Adafruit_CharLCD import Adafruit_CharLCD
+# from Adafruit_CharLCD import Adafruit_CharLCD
+import lib.lcd_display as LcdDisplay
 from lib.tag_data import TagData
 from config import (
     NUMBER_OF_READINGS, CHANNEL, GAIN, SCALE,
@@ -39,11 +40,10 @@ class RolliePollie:
         self._observer.on_scale_mount(self.write_patient_weight_callback_adder)
 
         # instantiate lcd and specify pins
-        # GPIO.setup(11, GPIO.OUT)
-        self.lcd = Adafruit_CharLCD(rs=RS_PIN, en=EN_PIN,
-                                    d4=D4_PIN, d5=D5_PIN, d6=D6_PIN, d7=D7_PIN,
-                                    cols=16, lines=2)
-        self.lcd.clear()
+        self.lcd = LcdDisplay.LcdDisplay(RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
+        self.lcd.init_io()
+        self.lcd.init_lcd()
+        
 
     # Callbacks ###
     def test_callback(self):
@@ -72,10 +72,14 @@ class RolliePollie:
         self._memoized_tag_data = RolliePollie.EMPTY_TAG
 
     def tare_callback(self, channel):
+        total_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
+        self.output_weight_g_to_kg(total_weight)
         self._scale.zero(times=10)
         print("Tared")
 
     def register_callback(self, channel):
+        total_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
+        self.output_weight_g_to_kg(total_weight)
         wheelchair_weight = self._scale.get_weight_mean(NUMBER_OF_READINGS)
         self._ser_nfc.write_wheelchair_weight(wheelchair_weight)
         print("updated wheelchair weight to {}".format(wheelchair_weight))
@@ -162,17 +166,25 @@ class RolliePollie:
 
         finally:
             self._ser_nfc.close()
-            self.lcd.enable_display(False)
+            self.lcd.display_off()
             GPIO.cleanup()
 
     def output_weight_g_to_kg(self, weight, decimal_points = 1):
-        self.lcd.clear()
+        self.lcd.clear_display()
 
-        weight_in_kg = round(weight / 1000, decimal_points)
+        weight_in_kg = int(round(weight / 1000, decimal_points) * 10)
+        weight_in_kg = weight_in_kg if weight_in_kg != 0 else abs(0)    # converts -0 to 0
+        isNegative = True if weight_in_kg < 0 else False
+        weight_in_kg = abs(weight_in_kg)
+            
+        if weight_in_kg < 10:
+            w_str = "  {:02}".format(weight_in_kg)
+        else:
+            w_str = "{:>4}".format(weight_in_kg)
         # Ensures that zeroes are positive
-        formatted_output = "{:.1f}kg".format(weight_in_kg if weight_in_kg != 0 else abs(weight_in_kg))
+        # formatted_output = "{:.1f}".format(weight_in_kg if weight_in_kg != 0 else abs(weight_in_kg))
 
-        self.lcd.message(formatted_output)
+        self.lcd.display_weight(w_str, isNegative)
 
 
 if __name__ == '__main__':
