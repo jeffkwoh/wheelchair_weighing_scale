@@ -216,6 +216,14 @@ class LcdDisplay:
         self.go_to_x_y(0, pos[1])
         self.send_char('g')
 
+    def show_nfc_write_indicator(self):
+        self.go_to_x_y(1, 19)
+        self.send_char('!')
+
+    def clear_nfc_write_indicator(self):
+        self.go_to_x_y(1, 19)
+        self.send_char(' ')
+
     def display_weight(self, weight, isNegative):
         # displays large digit weight on 20x4 LCD
         # Note: format for weight is a string in kg without decimal point
