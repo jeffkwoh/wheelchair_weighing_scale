@@ -236,4 +236,3 @@ class LcdDisplay:
             else:
                 continue
         self.show_kg()
-        sleep(1)
