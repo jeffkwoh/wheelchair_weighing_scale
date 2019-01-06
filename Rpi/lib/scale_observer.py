@@ -4,7 +4,7 @@ from collections import deque
 # ScaleObserver is used to monitor changes in the weighing scale used, and trigger callbacks that are bound to it
 class ScaleObserver:
 
-    def __init__(self, threshold_weight=1000, tolerance=3, history_size=5, stability_deviation=500):
+    def __init__(self, threshold_weight=800, tolerance=3, history_size=5, stability_deviation=100):
 
         # person_on_scale, scale_dismount
         self._person_on_scale = False
@@ -90,7 +90,7 @@ class ScaleObserver:
                 if history is None or len(history) is 0:
                     return False
                 mean = reduce(lambda x, y: x + y, history, 0) / len(history)
-                return len([w for w in history if abs(w - mean) > self._tolerance]) == 0
+                return len([w for w in history if abs(w - mean) > self._stability_deviation]) == 0
 
             self._weight_history.append(weight)
 
@@ -184,3 +184,13 @@ class ScaleObserver:
                 callback()
             else:  # lazy deletion, callbacks with lifetime of zero are expired
                 del self._scale_mount_callbacks[callback]
+
+    def update(self, total_weight, tag_data, nfc_present):
+        self.nfc_present = nfc_present
+        self.tag_data = tag_data
+        self.total_weight = total_weight
+        print("Weight:{} Nfc_present:{} is_stable:{} person_on_scale:{}".format(
+            self.total_weight,
+            self.nfc_present,
+            self.is_stable,
+            self.person_on_scale))
