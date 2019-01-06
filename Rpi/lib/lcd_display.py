@@ -5,9 +5,7 @@
 #
 ########################################################################
 import RPi.GPIO as GPIO
-import random
 from time import sleep
-
 
 # HD44780 Controller Commands
 CLEAR_DISPLAY = 0x01
@@ -66,15 +64,10 @@ bigDigit = [
     [0x00, 0x06, 0x01, 0x02, 0x04, 0x06, 0x20, 0x20, 0x06, 0x20, 0x20, 0x06]  # 9
 ]
 
-bigKg = [
-    [0x06, 0x20, 0x03, 0x06, 0x03, 0x20, 0x06, 0x01, 0x20, 0x06, 0x20, 0x01],  #K
-    [0x07, 0x06, 0x06, 0x07, 0x20, 0x20, 0x07, 0x00, 0x06, 0x07, 0x06, 0x06]  #G
-]
-
 negative_sign = [0x20, 0x20, 0x20, 0x04, 0x04, 0x04, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]
 
-class LcdDisplay:
 
+class LcdDisplay:
     def __init__(self, rs, en, d4, d5, d6, d7):
         """
         :param pins: int
@@ -87,7 +80,7 @@ class LcdDisplay:
         self.LCD_D7 = d7
 
         self.OUTPUTS = [self.LCD_RS, self.LCD_E, self.LCD_D4, self.LCD_D5, self.LCD_D6, self.LCD_D7]
-        
+
     ########################################################################
     #
     # Low-level routines for configuring the LCD module.
@@ -100,12 +93,10 @@ class LcdDisplay:
         for lcdLine in self.OUTPUTS:
             GPIO.setup(lcdLine, GPIO.OUT)
 
-
     def pulse_enable_line(self):
         # Pulse the LCD Enable line; used for clocking in data
         GPIO.output(self.LCD_E, GPIO.HIGH)  # pulse E high
         GPIO.output(self.LCD_E, GPIO.LOW)  # return E low
-
 
     def send_nibble(self, data):
         # sends upper 4 bits of data byte to LCD data pins D4-D7
@@ -113,7 +104,6 @@ class LcdDisplay:
         GPIO.output(self.LCD_D5, bool(data & 0x20))
         GPIO.output(self.LCD_D6, bool(data & 0x40))
         GPIO.output(self.LCD_D7, bool(data & 0x80))
-
 
     def send_byte(self, data, charMode=False):
         # send one byte to LCD controller
@@ -124,7 +114,6 @@ class LcdDisplay:
         self.send_nibble(data)  # send lower bits now
         self.pulse_enable_line()  # pulse the enable line
 
-
     ########################################################################
     #
     # Higher-level routines for diplaying data on the LCD.
@@ -134,36 +123,28 @@ class LcdDisplay:
         self.send_byte(CLEAR_DISPLAY)
         sleep(0.0015)  # delay for 1.5mS
 
-    
     def display_off(self):
         self.send_byte(DISPLAY_OFF)
-
 
     def cursor_on(self):
         self.send_byte(CURSOR_ON)
 
-
     def cursor_off(self):
         self.send_byte(CURSOR_OFF)
-
 
     def cursor_blink(self):
         self.send_byte(CURSOR_BLINK)
 
-
     def cursor_left(self):
         self.send_byte(CURSOR_LEFT)
 
-
     def cursor_right(self):
         self.send_byte(CURSOR_RIGHT)
-
 
     def reset_display(self):
         # This command requires 1.5mS processing time, so delay is needed
         self.send_byte(RETURN_HOME)
         sleep(0.0015)  # delay for 1.5mS
-
 
     def init_lcd(self):
         # initialize the LCD controller & clear display
@@ -174,17 +155,14 @@ class LcdDisplay:
         self.cursor_off()
         self.clear_display()
         self.reset_display()
-       
 
     def send_char(self, ch):
         self.send_byte(ord(ch), True)
-
 
     def show_message(self, string):
         # Send string of characters to display at current cursor position
         for character in string:
             self.send_char(character)
-
 
     def go_to_line(self, row):
         # Moves cursor to the given row
@@ -192,13 +170,11 @@ class LcdDisplay:
         addr = LINE[row]
         self.send_byte(SET_CURSOR + addr)
 
-
     def go_to_x_y(self, row, col):
         # Moves cursor to the given row & column
         # Expects col values 0-19 and row values 0-3 for a 20x4 display
         addr = LINE[row] + col
         self.send_byte(SET_CURSOR + addr)
-
 
     ########################################################################
     #
@@ -215,12 +191,10 @@ class LcdDisplay:
         for byte in data:
             self.send_byte(byte, True)
 
-
     def load_symbol_block(self, data):
         # loads a list of symbols into the chargen RAM, starting at addr 0x00
         for i in range(len(data)):
             self.load_custom_symbol(i, data[i])
-
 
     def show_big_digit(self, symbol, startCol):
         # displays a 4-row-high digit at specified column
@@ -230,21 +204,18 @@ class LcdDisplay:
                 index = row * 3 + col
                 self.send_byte(symbol[index], True)
 
-
     def show_period(self, col):
         # displays a period '.' at specified column
         self.go_to_x_y(3, col)
         self.send_char(DOT)
 
-
     def show_kg(self):
         # displays 'kg' at specified column
         pos = [18, 19]
-        self.go_to_x_y(0,pos[0])
+        self.go_to_x_y(0, pos[0])
         self.send_char('k')
-        self.go_to_x_y(0,pos[1])
+        self.go_to_x_y(0, pos[1])
         self.send_char('g')
-
 
     def display_weight(self, weight, isNegative):
         # displays large digit weight on 20x4 LCD
@@ -266,4 +237,3 @@ class LcdDisplay:
                 continue
         self.show_kg()
         sleep(1)
-
