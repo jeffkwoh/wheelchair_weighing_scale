@@ -23,7 +23,6 @@ SET_CURSOR = 0x80
 
 # Character constants
 DOT = chr(0xA1)
-WHITESPACE = chr(0x02)
 
 # Line Addresses.
 LINE = [0x00, 0x40, 0x14, 0x54]  # for 20x4 display
