@@ -80,6 +80,8 @@ class LcdDisplay:
 
         self.OUTPUTS = [self.LCD_RS, self.LCD_E, self.LCD_D4, self.LCD_D5, self.LCD_D6, self.LCD_D7]
 
+        self._show_indicator = False
+
     ########################################################################
     #
     # Low-level routines for configuring the LCD module.
@@ -121,6 +123,8 @@ class LcdDisplay:
         # This command requires 1.5mS processing time, so delay is needed
         self.send_byte(CLEAR_DISPLAY)
         sleep(0.0015)  # delay for 1.5mS
+        if self._show_indicator:
+            self.show_nfc_write_indicator()
 
     def display_off(self):
         self.send_byte(DISPLAY_OFF)
@@ -216,9 +220,15 @@ class LcdDisplay:
         self.go_to_x_y(0, pos[1])
         self.send_char('g')
 
+    def set_show_nfc_write_indicator_on(self):
+        self._show_indicator = True
+
     def show_nfc_write_indicator(self):
         self.go_to_x_y(1, 19)
         self.send_char('!')
+
+    def set_show_nfc_write_indicator_off(self):
+        self._show_indicator = False
 
     def clear_nfc_write_indicator(self):
         self.go_to_x_y(1, 19)

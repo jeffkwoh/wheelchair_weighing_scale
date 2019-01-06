@@ -9,6 +9,7 @@
 #define UPDATE_WEIGHT_STATE '@'
 #define PATIENT_WEIGHT_PREFIX " @"
 #define LIBRARY_TEXT_RECORD_PREFIX "\02en"
+#define MIFARE_ULTRALIGHT_RECORD_LIMIT (4)
 
 PN532_HSU pn532hsu(Serial1);
 //PN532 nfc(pn532hsu);
@@ -105,7 +106,8 @@ void serialEvent() {
       
       // Only attempts to write if NFC tag has less than 2 records
       // Currently experiencing a problem when the 3rd block is written into
-      boolean success = message.getRecordCount() > 2 ? false : nfc.write(message);
+      // CONFIGURED FOR MIFARE ULTRALIGHT, MIFARE CLASSIC HAS LESS SPACE
+      boolean success = message.getRecordCount() > MIFARE_ULTRALIGHT_RECORD_LIMIT ? false : nfc.write(message);  
       if (success) {
         Serial.println("NFC tag successfully written!"); // if it works you will see this message 
       } else {

@@ -32,35 +32,35 @@ class RolliePollie:
         self._memoized_tag_data = None
         self._state = State.DEFAULT
 
+        # instantiate lcd and specify pins
+        self.lcd = LcdDisplay.LcdDisplay(RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
+        self.lcd.init_io()
+        self.lcd.init_lcd()
+
         # setup
         self.setup_gpio()
         self.setup_scale()
         self._observer.on_scale_dismount(self.flush_tag_data_callback)
         self._observer.on_scale_dismount(self.write_patient_weight_callback_clearer)
+        self._observer.on_scale_dismount(self.lcd.set_show_nfc_write_indicator_off)
         self._observer.on_scale_mount(self.write_patient_weight_callback_adder)
-
-        # instantiate lcd and specify pins
-        self.lcd = LcdDisplay.LcdDisplay(RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
-        self.lcd.init_io()
-        self.lcd.init_lcd()
 
     # Callbacks ###
     def test_callback(self):
         print("Tested")
 
     def write_patient_weight_callback_clearer(self):
-        '''
-        TODO: On succssful weighing AND RFID is present, at the moment this does not check
-        for RFID before writing to it
-        '''
+        print("Callbacks cleared")
         self._observer.on_successful_weighing(self.write_patient_weight_callback, lifetime=0)
+        self._observer.on_successful_weighing(self.indicate_nfc_write_callback, lifetime=0)
 
     def write_patient_weight_callback_adder(self):
-        '''
-        TODO: On succssful weighing AND RFID is present, at the moment this does not check
-        for RFID before writing to it
-        '''
+        print("Callbacks added")
         self._observer.on_successful_weighing(self.write_patient_weight_callback, lifetime=1)
+        self._observer.on_successful_weighing(self.indicate_nfc_write_callback, lifetime=1)
+
+    def indicate_nfc_write_callback(self, total_weight, wheelchair_weight):
+        self.lcd.set_show_nfc_write_indicator_on()
 
     def write_patient_weight_callback(self, total_weight, wheelchair_weight):
         patient_weight = round(total_weight - wheelchair_weight)
@@ -118,11 +118,6 @@ class RolliePollie:
                               callback=self.register_callback,
                               bouncetime=300)
 
-    def _update_observer(self, total_weight, tag_data, nfc_present):
-        self._observer.total_weight = total_weight
-        self._observer.tag_data = tag_data
-        self._observer.nfc_present = nfc_present
-
     def run(self):
         """
         Main logic for RolliePollie weighing scale
@@ -156,7 +151,7 @@ class RolliePollie:
                 else:  # If there is no available tag data, perform as a normal weighing scale
                     weight_in_grams = total_weight
 
-                self._update_observer(total_weight, self._memoized_tag_data, is_nfc_present)
+                self._observer.update(total_weight, self._memoized_tag_data, is_nfc_present)
                 self.output_weight_g_to_kg(weight_in_grams)
                 print("{:.1f}kg".format(weight_in_grams / 1000))  # for debugging
 
