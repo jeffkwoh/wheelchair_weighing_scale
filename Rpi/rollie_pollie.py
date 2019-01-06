@@ -43,7 +43,6 @@ class RolliePollie:
         self.lcd = LcdDisplay.LcdDisplay(RS_PIN, EN_PIN, D4_PIN, D5_PIN, D6_PIN, D7_PIN)
         self.lcd.init_io()
         self.lcd.init_lcd()
-        
 
     # Callbacks ###
     def test_callback(self):
@@ -159,7 +158,7 @@ class RolliePollie:
 
                 self._update_observer(total_weight, self._memoized_tag_data, is_nfc_present)
                 self.output_weight_g_to_kg(weight_in_grams)
-                print("{:.1f}kg".format(weight_in_grams / 1000)) # for debugging
+                print("{:.1f}kg".format(weight_in_grams / 1000))  # for debugging
 
         except (KeyboardInterrupt, SystemExit):
             print('\nGPIO cleaned up, serial closed(if opened)\n Bye (:')
@@ -169,14 +168,14 @@ class RolliePollie:
             self.lcd.display_off()
             GPIO.cleanup()
 
-    def output_weight_g_to_kg(self, weight, decimal_points = 1):
+    def output_weight_g_to_kg(self, weight, decimal_points=1):
         self.lcd.clear_display()
 
         weight_in_kg = int(round(weight / 1000, decimal_points) * 10)
-        weight_in_kg = weight_in_kg if weight_in_kg != 0 else abs(0)    # converts -0 to 0
+        weight_in_kg = weight_in_kg if weight_in_kg != 0 else abs(0)  # converts -0 to 0
         isNegative = True if weight_in_kg < 0 else False
         weight_in_kg = abs(weight_in_kg)
-            
+
         if weight_in_kg < 10:
             w_str = "  {:02}".format(weight_in_kg)
         else:
