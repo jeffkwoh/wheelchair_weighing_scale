@@ -96,7 +96,7 @@ class LcdDisplay:
     def init_io(self):
         # Sets GPIO pins to input & output, as required by LCD board
         GPIO.setmode(GPIO.BCM)
-        GPIO.setwarnings(False)
+        GPIO.setwarnings(True)
         for lcdLine in self.OUTPUTS:
             GPIO.setup(lcdLine, GPIO.OUT)
 
