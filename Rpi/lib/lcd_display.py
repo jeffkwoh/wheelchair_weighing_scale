@@ -23,7 +23,6 @@ SET_CURSOR = 0x80
 
 # Character constants
 DOT = chr(0xA1)
-WHITESPACE = chr(0x02)
 
 # Line Addresses.
 LINE = [0x00, 0x40, 0x14, 0x54]  # for 20x4 display
@@ -217,6 +216,14 @@ class LcdDisplay:
         self.go_to_x_y(0, pos[1])
         self.send_char('g')
 
+    def show_nfc_write_indicator(self):
+        self.go_to_x_y(1, 19)
+        self.send_char('!')
+
+    def clear_nfc_write_indicator(self):
+        self.go_to_x_y(1, 19)
+        self.send_char(' ')
+
     def display_weight(self, weight, isNegative):
         # displays large digit weight on 20x4 LCD
         # Note: format for weight is a string in kg without decimal point
@@ -236,4 +243,4 @@ class LcdDisplay:
             else:
                 continue
         self.show_kg()
-        sleep(1)
+
